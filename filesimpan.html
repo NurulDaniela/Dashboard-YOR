@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - YOR Pelindo</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f2f6ff;
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #003366;
+      color: white;
+      padding: 1em 2em;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: 60px;
+    }
+    .navbar .title { font-size: 1.5em; font-weight: bold; }
+    .navbar .profile {
+      background-color: white;
+      color: #003366;
+      padding: 0.4em 1em;
+      border-radius: 25px;
+      font-weight: bold;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #004080;
+      color: white;
+      position: fixed;
+      top: 60px;
+      bottom: 0;
+      left: 0;
+      padding-top: 20px;
+    }
+    .sidebar a {
+      display: block;
+      color: white;
+      padding: 15px 20px;
+      text-decoration: none;
+      transition: background-color 0.3s;
+    }
+    .sidebar a:hover { background-color: #0059b3; }
+    .main-content {
+      margin-left: 240px;
+      padding: 80px 20px 20px;
+    }
+    section { display: none; }
+    section.active { display: block; }
+    h2 { color: #003366; }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
+      max-width: 1000px;
+      margin-top: 20px;
+    }
+    form label {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+    }
+    form input, form select {
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    form button {
+      grid-column: span 2;
+      justify-self: start;
+      padding: 10px 20px;
+      background-color: #003366;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    form button:hover { background-color: #0059b3; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    table, th, td { border: 1px solid #ccc; }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #0059b3;
+      color: white;
+    }
+
+    .status-aman {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .status-tidak-aman {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .status-info {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .status-info span {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    #status-summary {
+      margin-top: 10px;
+      font-size: 0.95em;
+    }
+
+    .chart-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .chart-container h4 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #003366;
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+  <div class="navbar">
+    <div class="title">YOR Pelindo</div>
+    <div class="profile">Profil</div>
+  </div>
+
+  <div class="sidebar">
+    <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+    <a href="#" onclick="showSection('input')">Input Data</a>
+    <a href="#" onclick="showSection('laporan')">Laporan YOR</a>
+  </div>
+
+  <div class="main-content">
+    <section id="dashboard" class="active">
+      <h2>Dashboard</h2>
+      <div class="status-info">
+        <span class="status-aman">AMAN (YOR &lt; 65%)</span>
+        <span class="status-tidak-aman">TIDAK AMAN (YOR ≥ 65%)</span>
+        <div id="status-summary"></div>
+      </div>
+      <div id="dashboardContent" class="chart-container">
+        <div><h4>YOR (%)</h4><canvas id="chartYOR"></canvas></div>
+        <div><h4>Container Longstay &gt; 3 Hari</h4><canvas id="chartLongstay3"></canvas></div>
+        <div><h4>Container Longstay &gt; 30 Hari</h4><canvas id="chartLongstay30"></canvas></div>
+        <div><h4>Jumlah Gatepass</h4><canvas id="chartGatepass"></canvas></div>
+      </div>
+    </section>
+
+    <section id="input">
+      <h2>Input Data</h2>
+      <form id="inputForm">
+        <label for="terminal">Terminal:
+          <select id="terminal">
+            <option value="JICT">JICT</option>
+            <option value="KOJA">KOJA</option>
+            <option value="IPC TPK International (OJA)">IPC TPK International (OJA)</option>
+            <option value="IPC TPK International (TSJ)">IPC TPK International (TSJ)</option>
+            <option value="IPC TPK Domestik (MSA)">IPC TPK Domestik (MSA)</option>
+            <option value="IPC TPK Domestik (TEMAS)">IPC TPK Domestik (TEMAS)</option>
+            <option value="IPC TPK Domestik (009)">IPC TPK Domestik (009)</option>
+            <option value="IPC TPK Domestik (ADP)">IPC TPK Domestik (ADP)</option>
+            <option value="IPC TPK Domestik (DHU)">IPC TPK Domestik (DHU)</option>
+            <option value="NPCT 1">NPCT 1</option>
+            <option value="MAL">MAL</option>
+            <option value="IKT">IKT</option>
+            <option value="PTP">PTP</option>
+            <option value="PNP">PNP</option>
+          </select>
+        </label>
+        <label for="YorEksisting">YOR Eksisting:
+          <input type="number" id="YorEksisting">
+        </label>
+        <label for="ContainerCV">Jumlah Container di CY:
+          <input type="number" id="ContainerCV">
+        </label>
+        <label for="longstay3">Container Longstay > 3 Hari:
+          <input type="number" id="longstay3">
+        </label>
+        <label for="longstay30">Container Longstay > 30 Hari:
+          <input type="number" id="longstay30">
+        </label>
+        <label for="KapasitasHarianCV">Kapasitas Harian CY:
+          <input type="number" id="KapasitasHarianCV">
+        </label>
+        <label for="JumlahKapal">Jumlah Kapal:
+          <input type="number" id="JumlahKapal">
+        </label>
+        <label for="JumlahMuatan">Jumlah Muatan:
+          <input type="number" id="JumlahMuatan">
+        </label>
+        <label for="JumlahGatepass">Jumlah Total Gatepass:
+          <input type="number" id="JumlahGatepass">
+        </label>
+        <label for="JumlahGateIn">Jumlah Gate In:
+          <input type="number" id="JumlahGateIn">
+        </label>
+        <label for="JumlahGateBelumMasuk">Jumlah Gate Belum Masuk:
+          <input type="number" id="JumlahGateBelumMasuk">
+        </label>
+        <button type="submit">Kirim</button>
+      </form>
+    </section>
+
+    <section id="laporan">
+      <h2>Laporan YOR & Container Longstay</h2>
+      <p id="periode-info"></p>
+      <div id="laporanContent">
+        <table id="laporanTable">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Terminal</th>
+              <th>YOR (%)</th>
+              <th>Jumlah Container di CY</th>
+              <th>Container >3 Hari</th>
+              <th>Container >30 Hari</th>
+              <th>Kapasitas Harian CY</th>
+              <th>Jumlah Kapal</th>
+              <th>Jumlah Muatan</th>
+              <th>Total Gatepass</th>
+              <th>Gate In</th>
+              <th>Belum Masuk</th>
+              <th>Status YOR</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button onclick="generatePDF()">Download PDF</button>
+    </section>
+  </div>
+
+  <script>
+    function getPeriode() {
+      const now = new Date();
+      const hour = now.getHours();
+      if (hour >= 2 && hour < 8) return 1;
+      if (hour >= 8 && hour < 14) return 2;
+      if (hour >= 14 && hour < 20) return 3;
+      return 4;
+    }
+
+    function showSection(id) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      if (id === 'dashboard' || id === 'laporan') loadLaporan();
+    }
+
+    document.getElementById("inputForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const periode = getPeriode();
+      const now = new Date();
+      const data = {
+        terminal: terminal.value,
+        YOR: parseFloat(YorEksisting.value),
+        CY: parseInt(ContainerCV.value),
+        l3: parseInt(longstay3.value),
+        l30: parseInt(longstay30.value),
+        kapasitas: parseInt(KapasitasHarianCV.value),
+        kapal: parseInt(JumlahKapal.value),
+        muatan: parseInt(JumlahMuatan.value),
+        gatepass: parseInt(JumlahGatepass.value),
+        gatein: parseInt(JumlahGateIn.value),
+        belumgate: parseInt(JumlahGateBelumMasuk.value),
+        waktu: now.toLocaleString(),
+        periode: periode
+      };
+      const key = "periode" + periode;
+      let laporan = JSON.parse(localStorage.getItem(key)) || [];
+
+      // Perbaikan: replace data lama jika terminal sudah ada
+      const existingIndex = laporan.findIndex(item => item.terminal === data.terminal);
+      if (existingIndex !== -1) {
+        laporan[existingIndex] = data;
+      } else {
+        laporan.push(data);
+      }
+
+      localStorage.setItem(key, JSON.stringify(laporan));
+      loadLaporan();
+      showSection("laporan");
+    });
+
+    function generatePDF() {
+      const element = document.getElementById("laporan");
+      const opt = {
+        margin: [0.3, 0.3, 0.3, 0.3],
+        filename: 'laporan-yor.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 1.5, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+
+    let charts = {};
+    function updateCharts(data) {
+      const latest = {};
+      data.forEach(d => latest[d.terminal] = d);
+      const labels = Object.keys(latest);
+      const dataset = key => labels.map(t => latest[t][key]);
+
+      const config = (id, label, key, color) => {
+        if (charts[id]) charts[id].destroy();
+        charts[id] = new Chart(document.getElementById(id), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{ label, data: dataset(key), backgroundColor: color }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+      };
+
+      config("chartYOR", "YOR (%)", "YOR", "rgba(255,99,132,0.6)");
+      config("chartLongstay3", ">3 Hari", "l3", "rgba(255,206,86,0.6)");
+      config("chartLongstay30", ">30 Hari", "l30", "rgba(153,102,255,0.6)");
+      config("chartGatepass", "Gatepass", "gatepass", "rgba(60,179,113,0.6)");
+    }
+
+    function loadLaporan() {
+      const tbody = document.querySelector("#laporanTable tbody");
+      tbody.innerHTML = "";
+      let all = [];
+      for (let i = 1; i <= 4; i++) {
+        const periodeData = JSON.parse(localStorage.getItem("periode" + i)) || [];
+        all = all.concat(periodeData.filter(d => d.periode === getPeriode()));
+      }
+
+      document.getElementById("periode-info").textContent = "Periode sekarang: " + getPeriode() + " | Update: " + new Date().toLocaleString();
+
+      const amanList = [], tidakAmanList = [];
+
+      all.forEach((d, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i + 1}</td><td>${d.terminal}</td><td>${d.YOR}</td><td>${d.CY}</td><td>${d.l3}</td><td>${d.l30}</td><td>${d.kapasitas}</td><td>${d.kapal}</td><td>${d.muatan}</td><td>${d.gatepass}</td><td>${d.gatein}</td><td>${d.belumgate}</td>
+          <td class="${d.YOR >= 65 ? 'status-tidak-aman' : 'status-aman'}">${d.YOR >= 65 ? 'TIDAK AMAN' : 'AMAN'}</td>
+        `;
+        tbody.appendChild(tr);
+
+        if (d.YOR >= 65) {
+          tidakAmanList.push(d.terminal);
+        } else {
+          amanList.push(d.terminal);
+        }
+      });
+
+      document.getElementById("status-summary").innerHTML = `
+        <div><strong> Terminal AMAN:</strong> ${amanList.join(', ') || '-'}</div>
+        <div><strong> Terminal TIDAK AMAN:</strong> ${tidakAmanList.join(', ') || '-'}</div>
+      `;
+
+      updateCharts(all);
+    }
+
+    window.onload = loadLaporan;
+  </script>
+</body>
+</html>

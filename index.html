@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Pelindo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page"></bodyclass>>
+    <div class="login-wrapper">
+        <!-- Kiri: Form Login -->
+        <div class="login-box">
+            <img src="https://th.bing.com/th/id/R.326afad40683c2bc3d9fab7dde27ab6b?rik=bBSPIRd1z28kBA&riu=http%3a%2f%2fp-ercent.pelindo.co.id%2ficons%2flogoPelindo.png&ehk=j281BYBfm8an%2bK1L6eTpTYEObrfBgZu4y9f6tr8Tifk%3d&risl=&pid=ImgRaw&r=0" 
+                 alt="Logo Pelindo" class="logo">
+            
+            <form class="login-form" action="#" method="POST">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Masukkan username">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Masukkan password">
+                <!-- Tambahkan ini di dalam form, tepat setelah input password -->
+                <p id="error-msg" style="color: red; font-size: 14px; display: none; margin-top: 5px;">
+                Username atau password salah!
+                </p>
+
+
+                <button type="submit">Masuk</button>
+                <a href="#" class="forgot">Lupa Password?</a>
+            </form>
+        </div>
+
+        <!-- Kanan: Gambar Ilustrasi -->
+        <div class="image-box">
+            <img src="https://cdn1.katadata.co.id/media/images/thumb/2020/02/17/2020_02_17-19_54_10_a63afc50ce981d554a9a7e5434ed2b96_960x640_thumb.jpg" 
+                 alt="Pelabuhan Tanjung Priok" class="side-image">
+        </div>
+    </div>
+
+    <!-- Tambahkan script login -->
+<script>
+    const akunList = [
+        { username: "Admin", password: "0001" },
+        { username: "Operasi Umum", password: "0002" },
+        { username: "KSOP", password: "0003" },
+        { username: "JICT", password: "0004" },
+        { username: "IPCInterOJA", password: "0005" },
+        { username: "IPCInterTSJ", password: "0006" },
+        { username: "IPCDomMSA", password: "0007" },
+        { username: "IPCDomTEMAS", password: "0008" },
+        { username: "IPCDom009", password: "0009" },
+        { username: "IPCDomADP", password: "0010" },
+        { username: "IPCDomDHU", password: "0011" },
+        { username: "NPCT1", password: "0012" },
+        { username: "MAL", password: "0013" },
+        { username: "IKT", password: "0014" },
+        { username: "PTP", password: "0015" },
+        { username: "PNP", password: "0016" }
+    ];
+
+    document.querySelector(".login-form").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const user = document.getElementById("username").value;
+        const pass = document.getElementById("password").value;
+        const errorMsg = document.getElementById("error-msg");
+
+        const akunValid = akunList.find(akun => akun.username === user && akun.password === pass);
+
+        if (akunValid) {
+            errorMsg.style.display = "none";
+            window.location.href = "dashboard.html";
+        } else {
+            errorMsg.style.display = "block";
+        }
+    });
+</script>
+</body>
+</html>
